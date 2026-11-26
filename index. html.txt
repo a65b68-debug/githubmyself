@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>智慧氣象查詢系統</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", sans-serif;
+      background: #f4f7fb;
+      color: #1f2937;
+      margin: 0;
+      padding: 24px;
+    }
+    .container {
+      max-width: 760px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+    }
+    h1 {
+      margin-top: 0;
+      font-size: 24px;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    input, select, button {
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      font-size: 14px;
+    }
+    input {
+      flex: 1;
+      min-width: 220px;
+    }
+    button {
+      background: #2563eb;
+      color: #ffffff;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button:hover {
+      background: #1d4ed8;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .label {
+      font-size: 13px;
+      color: #64748b;
+    }
+    .value {
+      font-size: 26px;
+      font-weight: 700;
+      margin-top: 6px;
+    }
+    .advice {
+      background: #eff6ff;
+      border-left: 4px solid #2563eb;
+      padding: 14px 16px;
+      border-radius: 8px;
+      line-height: 1.6;
+    }
+    .status {
+      margin-top: 12px;
+      font-size: 13px;
+      color: #64748b;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>智慧氣象查詢系統</h1>
+
+    <div class="controls">
+      <select id="citySelect">
+        <option value="臺北市">臺北市</option>
+        <option value="臺中市">臺中市</option>
+        <option value="高雄市">高雄市</option>
+      </select>
+      <input id="apiKeyInput" type="password" placeholder="貼上授權碼（選填，留空使用內建資料）" />
+      <button id="queryBtn">查詢氣象</button>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="label">氣溫</div>
+        <div class="value" id="tempVal">-- °C</div>
+      </div>
+      <div class="card">
+        <div class="label">相對濕度</div>
+        <div class="value" id="humVal">-- %</div>
+      </div>
+      <div class="card">
+        <div class="label">風速</div>
+        <div class="value" id="windVal">-- m/s</div>
+      </div>
+    </div>
+
+    <div class="advice" id="adviceBox">請選擇城市並點擊「查詢氣象」。</div>
+    <div class="status" id="statusText">資料模式：待查詢</div>
+  </div>
+
+  <script>
+    const fallbackData = {
+      "臺北市": { temp: 24, humidity: 78, wind: 3.2, weather: "多雲" },
+      "臺中市": { temp: 27, humidity: 65, wind: 2.5, weather: "晴時多雲" },
+      "高雄市": { temp: 30, humidity: 60, wind: 2.0, weather: "晴朗炎熱" }
+    };
+
+    function buildAdvice(data) {
+      const tips = [];
+      if (data.temp >= 30) {
+        tips.push("氣溫達 30°C 以上，外出請注意防曬與補充水分。");
+      } else if (data.temp <= 18) {
+        tips.push("氣溫偏涼，建議攜帶薄外套或保暖衣物。");
+      } else {
+        tips.push("目前氣溫舒適，適合日常外出活動。");
+      }
+
+      if (data.humidity > 75) {
+        tips.push("相對濕度大於 75%，體感較悶潮濕，留意除濕與通風。");
+      }
+      return tips.join(" ");
+    }
+
+    function renderWeather(city, data, modeText) {
+      document.getElementById("tempVal").textContent = `${data.temp} °C`;
+      document.getElementById("humVal").textContent = `${data.humidity} %`;
+      document.getElementById("windVal").textContent = `${data.wind} m/s`;
+      document.getElementById("adviceBox").textContent =
+        `【${city}｜${data.weather}】${buildAdvice(data)}`;
+      document.getElementById("statusText").textContent = `資料模式：${modeText}`;
+    }
+
+    async function fetchCwaObservation(apiKey, city) {
+      // 示範呼叫中央氣象署觀測資料端點（O-A0003-001）；若環境阻擋或欄位不符，將自動回退至內建資料
+      const url = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization=${encodeURIComponent(apiKey)}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("API 回應狀態異常");
+      const json = await res.json();
+      const stations = json?.records?.Station || [];
+      const matched = stations.find((st) => {
+        const county = st?.GeoInfo?.CountyName || "";
+        return county.includes(city.replace("台", "臺")) || county.includes(city.replace("臺", "台"));
+      });
+      if (!matched) throw new Error("查無對應縣市測站資料");
+
+      const temp = Number(matched?.WeatherElement?.AirTemperature);
+      const humidity = Number(matched?.WeatherElement?.RelativeHumidity);
+      const wind = Number(matched?.WeatherElement?.WindSpeed);
+      const weather = matched?.WeatherElement?.Weather || "即時觀測";
+
+      if (Number.isNaN(temp) || Number.isNaN(humidity)) {
+        throw new Error("氣象數值欄位解析失敗");
+      }
+      return {
+        temp,
+        humidity,
+        wind: Number.isNaN(wind) ? 0 : wind,
+        weather
+      };
+    }
+
+    async function handleQuery() {
+      const city = document.getElementById("citySelect").value;
+      const apiKey = document.getElementById("apiKeyInput").value.trim();
+      const fallback = fallbackData[city];
+
+      if (!apiKey) {
+        renderWeather(city, fallback, "內建示範資料");
+        return;
+      }
+
+      document.getElementById("statusText").textContent = "資料模式：正在向氣象署 API 查詢...";
+      try {
+        const liveData = await fetchCwaObservation(apiKey, city);
+        renderWeather(city, liveData, "中央氣象署即時觀測資料");
+      } catch (err) {
+        renderWeather(city, fallback, `改用內建示範資料（${err.message}）`);
+      }
+    }
+
+    document.getElementById("queryBtn").addEventListener("click", handleQuery);
+    window.addEventListener("DOMContentLoaded", handleQuery);
+  </script>
+</body>
+</html>
