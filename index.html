@@ -7,22 +7,38 @@
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", sans-serif;
-      background: #f4f7fb;
-      color: #1f2937;
+      background: #f1f5f9;
+      color: #0f172a;
       margin: 0;
       padding: 24px;
     }
     .container {
-      max-width: 760px;
+      max-width: 840px;
       margin: 0 auto;
       background: #ffffff;
       border-radius: 16px;
-      padding: 24px;
-      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+      padding: 28px;
+      box-shadow: 0 10px 28px rgba(15, 23, 42, 0.07);
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 18px;
     }
     h1 {
-      margin-top: 0;
+      margin: 0;
       font-size: 24px;
+    }
+    .sub-badge {
+      font-size: 13px;
+      color: #2563eb;
+      background: #eff6ff;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-weight: 600;
     }
     .controls {
       display: flex;
@@ -38,7 +54,7 @@
     }
     input {
       flex: 1;
-      min-width: 220px;
+      min-width: 230px;
     }
     button {
       background: #2563eb;
@@ -54,7 +70,7 @@
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 14px;
-      margin-bottom: 20px;
+      margin-bottom: 18px;
     }
     .card {
       background: #f8fafc;
@@ -77,31 +93,89 @@
       padding: 14px 16px;
       border-radius: 8px;
       line-height: 1.6;
+      margin-bottom: 12px;
     }
-    .status {
-      margin-top: 12px;
+    .meta {
       font-size: 13px;
-      color: #64748b;
+      color: #475569;
+      margin-bottom: 24px;
+    }
+    .chart-section {
+      border-top: 1px solid #e2e8f0;
+      padding-top: 20px;
+    }
+    .chart-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 14px;
+    }
+    .bar-row {
+      display: grid;
+      grid-template-columns: 76px 1fr 120px;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+      font-size: 14px;
+    }
+    .bar-track {
+      background: #e2e8f0;
+      border-radius: 999px;
+      height: 14px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #3b82f6, #0ea5e9);
+      border-radius: 999px;
+      transition: width 0.35s ease;
+    }
+    .bar-stat {
+      text-align: right;
+      font-weight: 600;
+      color: #334155;
+      font-size: 13px;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>智慧氣象查詢系統</h1>
+    <div class="header">
+      <h1>智慧氣象查詢系統</h1>
+      <span class="sub-badge">全台 22 縣市即時觀測與情境分析</span>
+    </div>
 
     <div class="controls">
       <select id="citySelect">
         <option value="臺北市">臺北市</option>
+        <option value="新北市">新北市</option>
+        <option value="基隆市">基隆市</option>
+        <option value="桃園市">桃園市</option>
+        <option value="新竹市">新竹市</option>
+        <option value="新竹縣">新竹縣</option>
+        <option value="苗栗縣">苗栗縣</option>
         <option value="臺中市">臺中市</option>
+        <option value="彰化縣">彰化縣</option>
+        <option value="南投縣">南投縣</option>
+        <option value="雲林縣">雲林縣</option>
+        <option value="嘉義市">嘉義市</option>
+        <option value="嘉義縣">嘉義縣</option>
+        <option value="臺南市">臺南市</option>
         <option value="高雄市">高雄市</option>
+        <option value="屏東縣">屏東縣</option>
+        <option value="宜蘭縣">宜蘭縣</option>
+        <option value="花蓮縣">花蓮縣</option>
+        <option value="臺東縣">臺東縣</option>
+        <option value="澎湖縣">澎湖縣</option>
+        <option value="金門縣">金門縣</option>
+        <option value="連江縣">連江縣</option>
       </select>
-      <input id="apiKeyInput" type="password" placeholder="貼上授權碼（選填，留空使用內建資料）" />
+      <input id="apiKeyInput" type="password" placeholder="貼上中央氣象署授權碼（選填，留空使用內建資料）" />
       <button id="queryBtn">查詢氣象</button>
     </div>
 
     <div class="grid">
       <div class="card">
-        <div class="label">氣溫</div>
+        <div class="label">即時氣溫</div>
         <div class="value" id="tempVal">-- °C</div>
       </div>
       <div class="card">
@@ -114,16 +188,42 @@
       </div>
     </div>
 
-    <div class="advice" id="adviceBox">請選擇城市並點擊「查詢氣象」。</div>
-    <div class="status" id="statusText">資料模式：待查詢</div>
+    <div class="advice" id="adviceBox">請選擇縣市並點擊「查詢氣象」。</div>
+    <div class="meta" id="statusText">資料模式：待查詢</div>
+
+    <div class="chart-section">
+      <div class="chart-title">重點城市氣溫與濕度對比（北／中／南／東）</div>
+      <div id="chartContainer"></div>
+    </div>
   </div>
 
   <script>
     const fallbackData = {
-      "臺北市": { temp: 24, humidity: 78, wind: 3.2, weather: "多雲" },
-      "臺中市": { temp: 27, humidity: 65, wind: 2.5, weather: "晴時多雲" },
-      "高雄市": { temp: 30, humidity: 60, wind: 2.0, weather: "晴朗炎熱" }
+      "臺北市": { temp: 24.0, humidity: 78, wind: 3.2, weather: "多雲", station: "臺北測站", obsTime: "示範資料" },
+      "新北市": { temp: 23.5, humidity: 80, wind: 3.5, weather: "陰時多雲", station: "新北測站", obsTime: "示範資料" },
+      "基隆市": { temp: 22.8, humidity: 84, wind: 4.1, weather: "陰有短暫雨", station: "基隆測站", obsTime: "示範資料" },
+      "桃園市": { temp: 24.2, humidity: 74, wind: 3.8, weather: "多雲", station: "新屋測站", obsTime: "示範資料" },
+      "新竹市": { temp: 24.8, humidity: 72, wind: 4.3, weather: "晴時多雲", station: "新竹測站", obsTime: "示範資料" },
+      "新竹縣": { temp: 24.5, humidity: 73, wind: 3.9, weather: "晴時多雲", station: "竹北測站", obsTime: "示範資料" },
+      "苗栗縣": { temp: 25.3, humidity: 70, wind: 3.1, weather: "晴時多雲", station: "苗栗測站", obsTime: "示範資料" },
+      "臺中市": { temp: 27.0, humidity: 65, wind: 2.5, weather: "晴時多雲", station: "臺中測站", obsTime: "示範資料" },
+      "彰化縣": { temp: 27.2, humidity: 66, wind: 2.8, weather: "晴朗", station: "田中測站", obsTime: "示範資料" },
+      "南投縣": { temp: 26.4, humidity: 68, wind: 1.9, weather: "晴時多雲", station: "日月潭測站", obsTime: "示範資料" },
+      "雲林縣": { temp: 27.8, humidity: 64, wind: 2.6, weather: "晴朗", station: "斗六測站", obsTime: "示範資料" },
+      "嘉義市": { temp: 28.3, humidity: 63, wind: 2.2, weather: "晴朗", station: "嘉義測站", obsTime: "示範資料" },
+      "嘉義縣": { temp: 28.1, humidity: 65, wind: 2.4, weather: "晴朗", station: "太保測站", obsTime: "示範資料" },
+      "臺南市": { temp: 29.2, humidity: 62, wind: 2.7, weather: "晴朗", station: "臺南測站", obsTime: "示範資料" },
+      "高雄市": { temp: 30.0, humidity: 60, wind: 2.0, weather: "晴朗炎熱", station: "高雄測站", obsTime: "示範資料" },
+      "屏東縣": { temp: 30.5, humidity: 61, wind: 2.1, weather: "晴朗炎熱", station: "恆春測站", obsTime: "示範資料" },
+      "宜蘭縣": { temp: 23.6, humidity: 82, wind: 2.9, weather: "多雲時陰", station: "宜蘭測站", obsTime: "示範資料" },
+      "花蓮縣": { temp: 25.5, humidity: 76, wind: 2.4, weather: "多雲", station: "花蓮測站", obsTime: "示範資料" },
+      "臺東縣": { temp: 26.8, humidity: 71, wind: 2.8, weather: "晴時多雲", station: "臺東測站", obsTime: "示範資料" },
+      "澎湖縣": { temp: 25.9, humidity: 75, wind: 5.2, weather: "多雲", station: "澎湖測站", obsTime: "示範資料" },
+      "金門縣": { temp: 23.1, humidity: 73, wind: 4.5, weather: "晴時多雲", station: "金門測站", obsTime: "示範資料" },
+      "連江縣": { temp: 20.4, humidity: 79, wind: 4.8, weather: "多雲", station: "馬祖測站", obsTime: "示範資料" }
     };
+
+    const compareCities = ["臺北市", "臺中市", "高雄市", "花蓮縣"];
 
     function buildAdvice(data) {
       const tips = [];
@@ -138,7 +238,27 @@
       if (data.humidity > 75) {
         tips.push("相對濕度大於 75%，體感較悶潮濕，留意除濕與通風。");
       }
+      if (data.wind >= 4.0) {
+        tips.push("風勢較明顯，騎車或海邊活動請留意陣風。");
+      }
       return tips.join(" ");
+    }
+
+    function renderChart(datasetMap) {
+      const container = document.getElementById("chartContainer");
+      container.innerHTML = "";
+      compareCities.forEach((c) => {
+        const item = datasetMap[c] || fallbackData[c];
+        const widthPct = Math.min(100, Math.max(15, Math.round((item.temp / 40) * 100)));
+        const row = document.createElement("div");
+        row.className = "bar-row";
+        row.innerHTML = `
+          <div>${c}</div>
+          <div class="bar-track"><div class="bar-fill" style="width:${widthPct}%"></div></div>
+          <div class="bar-stat">${item.temp}°C ｜ 濕度 ${item.humidity}%</div>
+        `;
+        container.appendChild(row);
+      });
     }
 
     function renderWeather(city, data, modeText) {
@@ -147,54 +267,66 @@
       document.getElementById("windVal").textContent = `${data.wind} m/s`;
       document.getElementById("adviceBox").textContent =
         `【${city}｜${data.weather}】${buildAdvice(data)}`;
-      document.getElementById("statusText").textContent = `資料模式：${modeText}`;
+      document.getElementById("statusText").textContent =
+        `資料模式：${modeText} ｜ 測站：${data.station} ｜ 觀測時間：${data.obsTime}`;
     }
 
-    async function fetchCwaObservation(apiKey, city) {
-      // 示範呼叫中央氣象署觀測資料端點（O-A0003-001）；若環境阻擋或欄位不符，將自動回退至內建資料
+    function parseStation(st) {
+      const temp = Number(st?.WeatherElement?.AirTemperature);
+      const humidity = Number(st?.WeatherElement?.RelativeHumidity);
+      const wind = Number(st?.WeatherElement?.WindSpeed);
+      if (Number.isNaN(temp) || Number.isNaN(humidity) || temp < -20 || humidity < 0) {
+        return null;
+      }
+      return {
+        temp,
+        humidity,
+        wind: Number.isNaN(wind) || wind < 0 ? 0 : wind,
+        weather: st?.WeatherElement?.Weather || "即時觀測",
+        station: st?.StationName ? `${st.StationName}測站` : "官方測站",
+        obsTime: st?.ObsTime?.DateTime ? st.ObsTime.DateTime.replace("T", " ").slice(0, 16) : "最新觀測"
+      };
+    }
+
+    async function fetchCwaAll(apiKey) {
       const url = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization=${encodeURIComponent(apiKey)}`;
       const res = await fetch(url);
       if (!res.ok) throw new Error("API 回應狀態異常");
       const json = await res.json();
       const stations = json?.records?.Station || [];
-      const matched = stations.find((st) => {
-        const county = st?.GeoInfo?.CountyName || "";
-        return county.includes(city.replace("台", "臺")) || county.includes(city.replace("臺", "台"));
+      const liveMap = { ...fallbackData };
+
+      Object.keys(fallbackData).forEach((city) => {
+        const norm = city.replace("台", "臺");
+        const matched = stations.find((st) => {
+          const county = (st?.GeoInfo?.CountyName || "").replace("台", "臺");
+          return county === norm && parseStation(st) !== null;
+        });
+        if (matched) {
+          liveMap[city] = parseStation(matched);
+        }
       });
-      if (!matched) throw new Error("查無對應縣市測站資料");
-
-      const temp = Number(matched?.WeatherElement?.AirTemperature);
-      const humidity = Number(matched?.WeatherElement?.RelativeHumidity);
-      const wind = Number(matched?.WeatherElement?.WindSpeed);
-      const weather = matched?.WeatherElement?.Weather || "即時觀測";
-
-      if (Number.isNaN(temp) || Number.isNaN(humidity)) {
-        throw new Error("氣象數值欄位解析失敗");
-      }
-      return {
-        temp,
-        humidity,
-        wind: Number.isNaN(wind) ? 0 : wind,
-        weather
-      };
+      return liveMap;
     }
 
     async function handleQuery() {
       const city = document.getElementById("citySelect").value;
       const apiKey = document.getElementById("apiKeyInput").value.trim();
-      const fallback = fallbackData[city];
 
       if (!apiKey) {
-        renderWeather(city, fallback, "內建示範資料");
+        renderWeather(city, fallbackData[city], "內建示範資料");
+        renderChart(fallbackData);
         return;
       }
 
-      document.getElementById("statusText").textContent = "資料模式：正在向氣象署 API 查詢...";
+      document.getElementById("statusText").textContent = "資料模式：正在向氣象署 API 查詢全台測站...";
       try {
-        const liveData = await fetchCwaObservation(apiKey, city);
-        renderWeather(city, liveData, "中央氣象署即時觀測資料");
+        const liveMap = await fetchCwaAll(apiKey);
+        renderWeather(city, liveMap[city], "中央氣象署即時觀測資料");
+        renderChart(liveMap);
       } catch (err) {
-        renderWeather(city, fallback, `改用內建示範資料（${err.message}）`);
+        renderWeather(city, fallbackData[city], `改用內建示範資料（${err.message}）`);
+        renderChart(fallbackData);
       }
     }
 
